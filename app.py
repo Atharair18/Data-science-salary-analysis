@@ -2,28 +2,49 @@ import streamlit as st
 import joblib
 import pandas as pd
 
-model = joblib.load('energy_model.pkl')
+model = joblib.load('salary_model.pkl')
 
-st.title("⚡ WattWise — Household Energy Usage Predictor")
-st.write("Predict tomorrow's household power usage based on recent consumption patterns.")
+st.title("💼 Data Science Salary Predictor")
+st.write("Estimate a data science salary based on role details.")
 
-st.header("Enter Recent Usage Data")
+st.header("Enter Job Details")
 
-lag_1 = st.number_input("Yesterday's usage (kW)", min_value=0.0, max_value=10.0, value=1.2)
-lag_2 = st.number_input("2 days ago usage (kW)", min_value=0.0, max_value=10.0, value=1.2)
-lag_3 = st.number_input("3 days ago usage (kW)", min_value=0.0, max_value=10.0, value=1.2)
-lag_7 = st.number_input("Same day last week (kW)", min_value=0.0, max_value=10.0, value=1.2)
-rolling_mean_7 = st.number_input("Average usage over past 7 days (kW)", min_value=0.0, max_value=10.0, value=1.2)
+experience_level = st.selectbox("Experience Level", ["EN", "MI", "SE", "EX"])
+employment_type = st.selectbox("Employment Type", ["FT", "PT", "CT", "FL"])
+job_title = st.selectbox("Job Title", ["Data Scientist", "Data Engineer", "Data Analyst", 
+                                          "Machine Learning Engineer", "Research Scientist", 
+                                          "Data Science Manager", "Data Architect", "Other"])
+company_size = st.selectbox("Company Size", ["S", "M", "L"])
+company_location = st.selectbox("Company Location", ["US", "GB", "IN", "CA", "DE", "Other"])
+remote_ratio = st.selectbox("Remote Ratio", [0, 50, 100])
+work_year = st.number_input("Work Year", min_value=2020, max_value=2026, value=2024)
 
-month = st.selectbox("Month", list(range(1,13)), index=0)
-day_of_week = st.selectbox("Day of week (0=Mon, 6=Sun)", list(range(0,7)), index=0)
-is_weekend = 1 if day_of_week in [5,6] else 0
-year = st.number_input("Year", min_value=2020, max_value=2030, value=2026)
-
-if st.button("Predict Usage"):
-    input_data = pd.DataFrame([[month, day_of_week, is_weekend, year, 
-                                  lag_1, lag_2, lag_3, lag_7, rolling_mean_7]],
-                                columns=['month', 'day_of_week', 'is_weekend', 'year',
-                                         'lag_1', 'lag_2', 'lag_3', 'lag_7', 'rolling_mean_7'])
-    prediction = model.predict(input_data)[0]
-    st.success(f"Predicted power usage: {prediction:.2f} kW")
+if st.button("Predict Salary"):
+    # Build input row matching training columns
+    input_dict = {col: 0 for col in model.feature_names_in_}
+    input_dict['work_year'] = work_year
+    input_dict['remote_ratio'] = remote_ratio
+    
+    exp_col = f'experience_level_{experience_level}'
+    if exp_col in input_dict:
+        input_dict[exp_col] = 1
+    
+    emp_col = f'employment_type_{employment_type}'
+    if emp_col in input_dict:
+        input_dict[emp_col] = 1
+    
+    title_col = f'job_title_{job_title}'
+    if title_col in input_dict:
+        input_dict[title_col] = 1
+    
+    size_col = f'company_size_{company_size}'
+    if size_col in input_dict:
+        input_dict[size_col] = 1
+    
+    loc_col = f'company_location_{company_location}'
+    if loc_col in input_dict:
+        input_dict[loc_col] = 1
+    
+    input_df = pd.DataFrame([input_dict])
+    prediction = model.predict(input_df)[0]
+    st.success(f"Predicted salary: ${prediction:,.0f}")
